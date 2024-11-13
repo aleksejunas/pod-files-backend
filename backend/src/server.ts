@@ -22,41 +22,35 @@ import multer from "multer";
 import cors from "cors";
 import { verifyToken } from "./firebaseAdminConfig";
 
+// JUST FOT GITUI TESTING
+
 const app = express();
 const upload = multer({
-  // dest: "uploads/",
   limits: { fileSize: 20 * 1024 * 1024 }, // 20MB
-  onError: function(err, next {
-  if (err.code === "LIMIT_FILE_SIZE") {
-  next(new Error("File too large. Max 20MB"));
-  })
-  fileFilter: (
-    req: Request,
-    file: Express.Multer.File,
-    cb: multer.FileFilterCallback,
-  ) => {
+  fileFilter: (req, file, cb: FileFilterCallback) => {
     const allowedMimeTypes = ["image/jpeg", "image/png", "image/tiff"];
-    const allowedExtensions = ["jpg", "jpeg", "png", "tiff"];
+    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.tiff'];
 
-    const fileExtension = file.originalname.split(".").pop()!.toLowerCase();
+    const fileExtension = path.extname(file.originalname).toLowerCase();
 
-    if (
-      allowedMimeTypes.includes(file.mimetype) &&
-      allowedExtensions.includes(
-        file.originalname.split(".").pop()!.toLowerCase(),
-      )
-    ) {
+    if (allowedMimeTypes.includes(file.mimetype) && 
+        allowedExtensions.includes(fileExtension)) {
       cb(null, true);
     } else {
-      cb(
-        new Error(
-          "Invalid file type. Only JPEG, PNG, and TIFF files are allowed.",
-        ) as any,
-        false,
-      );
+      cb(new Error("Invalid file type"), false);
     }
   },
 });
+
+// Error handling in your route handler
+app.post('/upload', upload.single('file'), (req, res, next) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+
+  if (req.file.size > 20 * 1024 * 1024) { // 20MB
+    return res.status(400).json({ error: 'File size exceeds the limit of 20MB' });
+  }
 // const bs = browserSync.create();
 
 app.use(cors());
